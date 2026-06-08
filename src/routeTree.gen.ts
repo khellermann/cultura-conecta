@@ -13,10 +13,12 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PesquisaVisitanteIdRouteImport } from './routes/pesquisa.$visitanteId'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminVisitantesRouteImport } from './routes/_authenticated/admin.visitantes'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin.usuarios'
+import { Route as AuthenticatedAdminSatisfacaoRouteImport } from './routes/_authenticated/admin.satisfacao'
 import { Route as AuthenticatedAdminRelatoriosRouteImport } from './routes/_authenticated/admin.relatorios'
 import { Route as AuthenticatedAdminQrcodeRouteImport } from './routes/_authenticated/admin.qrcode'
 
@@ -37,6 +39,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PesquisaVisitanteIdRoute = PesquisaVisitanteIdRouteImport.update({
+  id: '/pesquisa/$visitanteId',
+  path: '/pesquisa/$visitanteId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -61,6 +68,12 @@ const AuthenticatedAdminUsuariosRoute =
     path: '/usuarios',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminSatisfacaoRoute =
+  AuthenticatedAdminSatisfacaoRouteImport.update({
+    id: '/satisfacao',
+    path: '/satisfacao',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminRelatoriosRoute =
   AuthenticatedAdminRelatoriosRouteImport.update({
     id: '/relatorios',
@@ -79,8 +92,10 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/pesquisa/$visitanteId': typeof PesquisaVisitanteIdRoute
   '/admin/qrcode': typeof AuthenticatedAdminQrcodeRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/admin/satisfacao': typeof AuthenticatedAdminSatisfacaoRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/admin/visitantes': typeof AuthenticatedAdminVisitantesRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -89,8 +104,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/pesquisa/$visitanteId': typeof PesquisaVisitanteIdRoute
   '/admin/qrcode': typeof AuthenticatedAdminQrcodeRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/admin/satisfacao': typeof AuthenticatedAdminSatisfacaoRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/admin/visitantes': typeof AuthenticatedAdminVisitantesRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -102,8 +119,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/pesquisa/$visitanteId': typeof PesquisaVisitanteIdRoute
   '/_authenticated/admin/qrcode': typeof AuthenticatedAdminQrcodeRoute
   '/_authenticated/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/_authenticated/admin/satisfacao': typeof AuthenticatedAdminSatisfacaoRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/admin/visitantes': typeof AuthenticatedAdminVisitantesRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -115,8 +134,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
+    | '/pesquisa/$visitanteId'
     | '/admin/qrcode'
     | '/admin/relatorios'
+    | '/admin/satisfacao'
     | '/admin/usuarios'
     | '/admin/visitantes'
     | '/admin/'
@@ -125,8 +146,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/pesquisa/$visitanteId'
     | '/admin/qrcode'
     | '/admin/relatorios'
+    | '/admin/satisfacao'
     | '/admin/usuarios'
     | '/admin/visitantes'
     | '/admin'
@@ -137,8 +160,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/admin'
+    | '/pesquisa/$visitanteId'
     | '/_authenticated/admin/qrcode'
     | '/_authenticated/admin/relatorios'
+    | '/_authenticated/admin/satisfacao'
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/admin/visitantes'
     | '/_authenticated/admin/'
@@ -149,6 +174,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  PesquisaVisitanteIdRoute: typeof PesquisaVisitanteIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -181,6 +207,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pesquisa/$visitanteId': {
+      id: '/pesquisa/$visitanteId'
+      path: '/pesquisa/$visitanteId'
+      fullPath: '/pesquisa/$visitanteId'
+      preLoaderRoute: typeof PesquisaVisitanteIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -209,6 +242,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/satisfacao': {
+      id: '/_authenticated/admin/satisfacao'
+      path: '/satisfacao'
+      fullPath: '/admin/satisfacao'
+      preLoaderRoute: typeof AuthenticatedAdminSatisfacaoRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/relatorios': {
       id: '/_authenticated/admin/relatorios'
       path: '/relatorios'
@@ -229,6 +269,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminQrcodeRoute: typeof AuthenticatedAdminQrcodeRoute
   AuthenticatedAdminRelatoriosRoute: typeof AuthenticatedAdminRelatoriosRoute
+  AuthenticatedAdminSatisfacaoRoute: typeof AuthenticatedAdminSatisfacaoRoute
   AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
   AuthenticatedAdminVisitantesRoute: typeof AuthenticatedAdminVisitantesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -237,6 +278,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminQrcodeRoute: AuthenticatedAdminQrcodeRoute,
   AuthenticatedAdminRelatoriosRoute: AuthenticatedAdminRelatoriosRoute,
+  AuthenticatedAdminSatisfacaoRoute: AuthenticatedAdminSatisfacaoRoute,
   AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
   AuthenticatedAdminVisitantesRoute: AuthenticatedAdminVisitantesRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -261,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  PesquisaVisitanteIdRoute: PesquisaVisitanteIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

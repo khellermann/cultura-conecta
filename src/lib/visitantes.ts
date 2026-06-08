@@ -64,7 +64,7 @@ export async function fetchAllVisitantes(): Promise<Visitante[]> {
 export async function createVisitante(input: VisitanteInput) {
   const now = new Date();
 
-  await addDoc(collection(getFirebaseDb(), "visitantes"), {
+  const document = await addDoc(collection(getFirebaseDb(), "visitantes"), {
     ...input,
     data_visita: toDateInputValue(now),
     hora_visita: now.toLocaleTimeString("pt-BR", {
@@ -98,6 +98,8 @@ export async function createVisitante(input: VisitanteInput) {
     ),
     created_at: serverTimestamp(),
   });
+
+  return document.id;
 }
 
 export async function updateVisitante(id: string, input: VisitanteInput) {

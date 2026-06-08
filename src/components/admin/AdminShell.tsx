@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, FileBarChart, QrCode, LogOut, Menu, X, UserCog } from "lucide-react";
+import { LayoutDashboard, Users, FileBarChart, QrCode, LogOut, Menu, X, UserCog, SmilePlus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { getCurrentUserProfile, logout } from "@/integrations/firebase/client";
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/visitantes", label: "Visitantes", icon: Users },
+  { to: "/admin/satisfacao", label: "Satisfação", icon: SmilePlus },
   { to: "/admin/relatorios", label: "Relatórios", icon: FileBarChart },
   { to: "/admin/qrcode", label: "QR Code", icon: QrCode },
   { to: "/admin/usuarios", label: "Usuários", icon: UserCog, adminOnly: true },

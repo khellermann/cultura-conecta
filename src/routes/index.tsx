@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -46,6 +46,7 @@ const schema = z.object({
 });
 
 function VisitantePublicForm() {
+  const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [morador, setMorador] = useState<"sim" | "nao" | "">("");
@@ -79,13 +80,16 @@ function VisitantePublicForm() {
     }
 
     try {
-      await createVisitante({
+      const visitanteId = await createVisitante({
         nome: parsed.data.nome,
         telefone: parsed.data.telefone,
         morador_siqueira_campos: parsed.data.morador === "sim",
         cidade: parsed.data.morador === "nao" ? parsed.data.cidade : null,
         estado: parsed.data.morador === "nao" ? parsed.data.estado : null,
       });
+      if (typeof window !== "undefined") localStorage.setItem(recentKey, String(Date.now()));
+      navigate({ to: "/pesquisa/$visitanteId", params: { visitanteId } });
+      return;
     } catch {
       setLoading(false);
       toast.error("Não foi possível registrar. Tente novamente.");

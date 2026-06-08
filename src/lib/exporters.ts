@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import type { Visitante } from "./visitantes";
+import { AVALIACOES, type PesquisaSatisfacao } from "./pesquisas";
 
 export type ExportRow = Record<string, string | number>;
 
@@ -14,6 +15,19 @@ export function visitantesToRows(visitantes: Visitante[]): ExportRow[] {
     Estado: v.estado ?? "",
     Data: formatDate(v.data_visita),
     Hora: v.hora_visita.slice(0, 5),
+  }));
+}
+
+export function pesquisasToRows(pesquisas: PesquisaSatisfacao[]): ExportRow[] {
+  return pesquisas.map((p) => ({
+    Data: formatDate(p.data_resposta),
+    Visitante: p.visitante_nome,
+    Telefone: p.visitante_telefone,
+    Avaliação: AVALIACOES.find((item) => item.value === p.avaliacao)?.label ?? p.avaliacao,
+    Emoji: p.emoji,
+    "O que gostou": p.comentario_gostou,
+    Sugestão: p.sugestao_melhoria,
+    "Receber eventos": p.deseja_receber_eventos == null ? "" : p.deseja_receber_eventos ? "Sim" : "Não",
   }));
 }
 
