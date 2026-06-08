@@ -89,8 +89,12 @@ export function getAdminEmails() {
     .filter(Boolean);
 }
 
+export function emailIsConfiguredAdmin(email: string | null | undefined) {
+  return !!email && getAdminEmails().includes(email.toLowerCase());
+}
+
 export function userIsConfiguredAdmin(user: Pick<User, "email"> | null) {
-  return !!user?.email && getAdminEmails().includes(user.email.toLowerCase());
+  return emailIsConfiguredAdmin(user?.email);
 }
 
 export async function signInAdmin(email: string, password: string) {
@@ -114,20 +118,28 @@ export async function createAdminAccount(params: {
 export async function ensureUserProfile(user: User, nome?: string) {
   const profileRef = doc(getFirebaseDb(), "profiles", user.uid);
   const snapshot = await getDoc(profileRef);
-  const role = userIsConfiguredAdmin(user) ? "admin" : "operador";
+  const isAdmin = userIsConfiguredAdmin(user);
+  const role = isAdmin ? "admin" : "operador";
 
   if (!snapshot.exists()) {
     await setDoc(profileRef, {
       nome: nome || user.displayName || user.email?.split("@")[0] || "Usuário",
       email: user.email ?? "",
       role,
+      approved: isAdmin,
       created_at: serverTimestamp(),
     });
     return;
   }
 
-  if (snapshot.data().role !== role) {
-    await updateDoc(profileRef, { role });
+  const data = snapshot.data();
+  const updates: Record<string, unknown> = {};
+  if (data.role !== role) updates.role = role;
+  if (isAdmin && data.approved !== true) updates.approved = true;
+  if (!isAdmin && data.approved == null) updates.approved = false;
+
+  if (Object.keys(updates).length > 0) {
+    await updateDoc(profileRef, updates);
   }
 }
 
@@ -139,10 +151,52 @@ export async function getCurrentUserProfile() {
   const profile = snapshot.data();
 
   return {
+    id: user.uid,
     nome: profile?.nome ?? user.email ?? "Usuário",
     email: profile?.email ?? user.email ?? "",
     isAdmin: profile?.role === "admin" || userIsConfiguredAdmin(user),
+    role: profile?.role ?? "operador",
+    approved: profile?.approved === true || userIsConfiguredAdmin(user),
   };
+}
+
+export type UserProfile = {
+  id: string;
+  nome: string;
+  email: string;
+  role: "admin" | "operador";
+  approved: boolean;
+  created_at: string;
+};
+
+export async function fetchUserProfiles(): Promise<UserProfile[]> {
+  const snapshot = await getDocs(
+    query(collection(getFirebaseDb(), "profiles"), orderBy("created_at", "desc")),
+  );
+
+  return snapshot.docs.map((profileDoc) => {
+    const data = profileDoc.data();
+    const email = data.email ?? "";
+
+    return {
+      id: profileDoc.id,
+      nome: data.nome ?? email ?? "Usuário",
+      email,
+      role: emailIsConfiguredAdmin(email) ? "admin" : data.role ?? "operador",
+      approved: data.approved === true || emailIsConfiguredAdmin(email),
+      created_at: data.created_at?.toDate?.().toISOString?.() ?? data.created_at ?? "",
+    };
+  });
+}
+
+export async function approveUserProfile(id: string) {
+  await updateDoc(doc(getFirebaseDb(), "profiles", id), {
+    approved: true,
+  });
+}
+
+export async function removeUserProfile(id: string) {
+  await deleteDoc(doc(getFirebaseDb(), "profiles", id));
 }
 
 export async function sendPasswordReset(email: string) {

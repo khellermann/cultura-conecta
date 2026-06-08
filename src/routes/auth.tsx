@@ -9,7 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createAdminAccount,
   getFirebaseAuth,
+  getCurrentUserProfile,
   isFirebaseConfigured,
+  logout,
   sendPasswordReset,
   signInAdmin,
 } from "@/integrations/firebase/client";
@@ -32,7 +34,9 @@ function AuthPage() {
 
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
-    if (getFirebaseAuth().currentUser) navigate({ to: "/admin" });
+    getCurrentUserProfile().then((profile) => {
+      if (profile?.approved) navigate({ to: "/admin" });
+    });
   }, [navigate]);
 
   async function handleLogin(e: React.FormEvent) {
@@ -40,6 +44,12 @@ function AuthPage() {
     setLoading(true);
     try {
       await signInAdmin(email, password);
+      const profile = await getCurrentUserProfile();
+      if (!profile?.approved) {
+        await logout();
+        setLoading(false);
+        return toast.info("Seu acesso está aguardando aprovação do administrador.");
+      }
     } catch (error) {
       setLoading(false);
       return toast.error((error as Error).message);
@@ -55,6 +65,14 @@ function AuthPage() {
     setLoading(true);
     try {
       await createAdminAccount({ email, password, nome });
+      const profile = await getCurrentUserProfile();
+      if (!profile?.approved) {
+        await logout();
+        setLoading(false);
+        toast.success("Conta criada! Aguarde a aprovação do administrador.");
+        setTab("login");
+        return;
+      }
     } catch (error) {
       setLoading(false);
       return toast.error((error as Error).message);

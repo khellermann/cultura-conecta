@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, FileBarChart, QrCode, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, FileBarChart, QrCode, LogOut, Menu, X, UserCog } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ const NAV = [
   { to: "/admin/visitantes", label: "Visitantes", icon: Users },
   { to: "/admin/relatorios", label: "Relatórios", icon: FileBarChart },
   { to: "/admin/qrcode", label: "QR Code", icon: QrCode },
+  { to: "/admin/usuarios", label: "Usuários", icon: UserCog, adminOnly: true },
 ] as const;
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -47,7 +48,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="p-3 space-y-1">
-          {NAV.map((item) => {
+          {NAV.filter((item) => !("adminOnly" in item) || profile?.isAdmin).map((item) => {
             const Active = isActive(item.to, "exact" in item ? item.exact : false);
             return (
               <Link
