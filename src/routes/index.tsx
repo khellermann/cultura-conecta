@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createVisitante } from "@/lib/visitantes";
 import { toast } from "sonner";
-import museumVisitBg from "@/assets/museum-visit-bg.png";
+import museumVisitBg from "@/assets/hero-museu.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
