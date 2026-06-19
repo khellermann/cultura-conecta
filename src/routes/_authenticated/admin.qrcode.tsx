@@ -5,6 +5,7 @@ import { BookOpen, Building2, Copy, Download, Landmark, Printer, Share2 } from "
 import { Button } from "@/components/ui/button";
 import { ESPACOS, type EspacoVisita } from "@/lib/visitantes";
 import { toast } from "sonner";
+import culturaLogo from "@/assets/cultura-logo-horizontal.png";
 
 export const Route = createFileRoute("/_authenticated/admin/qrcode")({
   component: QRCodePage,
@@ -91,17 +92,103 @@ function QRCodeCard({
     printWindow.document.write(`
       <html><head><title>QR Code - ${label}</title>
       <style>
-        body { font-family: Inter, sans-serif; text-align:center; padding:40px; color:#1b1010; }
-        h1 { color:#5f1a1a; font-family: Georgia, serif; margin:8px 0 6px; font-size:34px; }
-        .sub { color:#5f1a1a; opacity:.72; letter-spacing:.18em; text-transform:uppercase; font-size:11px; }
-        img { width:360px; max-width:90vw; margin:28px auto; display:block; }
-        p { color:#444; font-size:16px; max-width:420px; margin:0 auto; line-height:1.5; }
+        @page { size: A4 portrait; margin: 14mm; }
+        * { box-sizing: border-box; }
+        body {
+          font-family: Arial, sans-serif;
+          text-align: center;
+          color: #1b1010;
+          margin: 0;
+          background: #fff;
+        }
+        .poster {
+          min-height: 267mm;
+          border: 2px solid #5f1a1a;
+          padding: 18mm 14mm 14mm;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .logo {
+          display: block;
+          width: 150mm;
+          max-width: 88%;
+          height: auto;
+          margin: 0 auto 12mm;
+        }
+        .divider {
+          width: 48mm;
+          height: 2px;
+          background: #bf9245;
+          margin-bottom: 9mm;
+        }
+        .eyebrow {
+          color: #5f1a1a;
+          letter-spacing: .22em;
+          text-transform: uppercase;
+          font-size: 11px;
+          font-weight: 700;
+        }
+        h1 {
+          color: #5f1a1a;
+          font-family: Georgia, serif;
+          margin: 3mm 0 2mm;
+          font-size: 34px;
+        }
+        .location {
+          color: #4b4545;
+          letter-spacing: .16em;
+          text-transform: uppercase;
+          font-size: 11px;
+        }
+        .qr-frame {
+          margin: 11mm auto 8mm;
+          padding: 7mm;
+          border: 1px solid #d7c8ad;
+          background: #fdfaf2;
+        }
+        .qr {
+          display: block;
+          width: 92mm;
+          height: 92mm;
+        }
+        .instruction {
+          color: #302a2a;
+          font-family: Georgia, serif;
+          font-size: 20px;
+          font-weight: 700;
+          max-width: 130mm;
+          margin: 0 auto 3mm;
+        }
+        .support {
+          color: #666;
+          font-size: 13px;
+          max-width: 118mm;
+          margin: 0 auto;
+          line-height: 1.5;
+        }
+        .footer {
+          color: #5f1a1a;
+          font-size: 10px;
+          letter-spacing: .12em;
+          text-transform: uppercase;
+          margin-top: auto;
+          padding-top: 10mm;
+        }
       </style></head><body>
-        <div class="sub">Secretaria de Cultura</div>
-        <h1>${label}</h1>
-        <div class="sub">Siqueira Campos / PR</div>
-        <img src="${dataUrl}" alt="QR Code ${label}" />
-        <p>Aponte a câmera do celular para registrar sua visita ao espaço.</p>
+        <main class="poster">
+          <img class="logo" src="${culturaLogo}" alt="Secretaria Municipal de Cultura" />
+          <div class="divider"></div>
+          <div class="eyebrow">Registro de visita</div>
+          <h1>${label}</h1>
+          <div class="location">Siqueira Campos / PR</div>
+          <div class="qr-frame">
+            <img class="qr" src="${dataUrl}" alt="QR Code ${label}" />
+          </div>
+          <p class="instruction">Sua visita faz parte da nossa história.</p>
+          <p class="support">Aponte a câmera do celular para o QR Code e registre sua presença em poucos segundos.</p>
+          <div class="footer">Secretaria Municipal de Cultura</div>
+        </main>
         <script>window.onload = () => window.print();</script>
       </body></html>
     `);
