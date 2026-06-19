@@ -12,10 +12,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   deleteVisitante,
+  ESPACOS,
   fetchAllVisitantes,
+  getEspacoLabel,
   updateVisitante,
   type Visitante,
 } from "@/lib/visitantes";
@@ -37,6 +40,7 @@ function VisitantesPage() {
   const [dataFim, setDataFim] = useState("");
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
+  const [espaco, setEspaco] = useState("todos");
   const [editing, setEditing] = useState<Visitante | null>(null);
   const [deleting, setDeleting] = useState<Visitante | null>(null);
 
@@ -48,9 +52,10 @@ function VisitantesPage() {
       if (dataFim && v.data_visita > dataFim) return false;
       if (cidade && !(v.cidade ?? "").toLowerCase().includes(cidade.toLowerCase())) return false;
       if (estado && (v.estado ?? "").toLowerCase() !== estado.toLowerCase()) return false;
+      if (espaco !== "todos" && v.espaco !== espaco) return false;
       return true;
     });
-  }, [visitantes, q, dataInicio, dataFim, cidade, estado]);
+  }, [visitantes, q, dataInicio, dataFim, cidade, estado, espaco]);
 
   async function handleDelete() {
     if (!deleting) return;
@@ -86,13 +91,20 @@ function VisitantesPage() {
         </div>
       </div>
 
-      <div className="bg-card border rounded-xl p-4 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="bg-card border rounded-xl p-4 grid sm:grid-cols-2 lg:grid-cols-6 gap-3">
         <div className="lg:col-span-2 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Buscar por nome ou telefone" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
         </div>
         <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} aria-label="Data início" />
         <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} aria-label="Data fim" />
+        <Select value={espaco} onValueChange={setEspaco}>
+          <SelectTrigger aria-label="Filtrar por espaço"><SelectValue placeholder="Espaço" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os espaços</SelectItem>
+            {ESPACOS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
         <div className="grid grid-cols-2 gap-2">
           <Input placeholder="Cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} />
           <Input placeholder="UF" maxLength={2} value={estado} onChange={(e) => setEstado(e.target.value.toUpperCase())} />
@@ -106,6 +118,7 @@ function VisitantesPage() {
               <tr>
                 <th className="text-left px-4 py-3">Nome</th>
                 <th className="text-left px-4 py-3">Telefone</th>
+                <th className="text-left px-4 py-3">Espaço</th>
                 <th className="text-left px-4 py-3">Origem</th>
                 <th className="text-left px-4 py-3">Data</th>
                 <th className="text-left px-4 py-3">Hora</th>
@@ -113,14 +126,15 @@ function VisitantesPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading && <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>}
+              {isLoading && <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>}
               {!isLoading && filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Nenhum registro encontrado.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">Nenhum registro encontrado.</td></tr>
               )}
               {filtered.map((v) => (
                 <tr key={v.id} className="border-t hover:bg-muted/30">
                   <td className="px-4 py-3 font-medium">{v.nome}</td>
                   <td className="px-4 py-3">{v.telefone}</td>
+                  <td className="px-4 py-3 font-medium">{getEspacoLabel(v.espaco)}</td>
                   <td className="px-4 py-3">
                     {v.morador_siqueira_campos ? (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">Siqueira Campos</span>
@@ -198,6 +212,7 @@ function EditDialog({
     if (!visitante) return;
     try {
       await updateVisitante(visitante.id, {
+        espaco: visitante.espaco,
         nome,
         telefone,
         morador_siqueira_campos: morador,

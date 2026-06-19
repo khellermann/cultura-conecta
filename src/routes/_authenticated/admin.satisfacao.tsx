@@ -16,8 +16,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AVALIACOES, fetchAllPesquisas, type PesquisaSatisfacao } from "@/lib/pesquisas";
 import { exportPDF, exportXLSX, pesquisasToRows } from "@/lib/exporters";
+import { ESPACOS, getEspacoLabel } from "@/lib/visitantes";
 
 export const Route = createFileRoute("/_authenticated/admin/satisfacao")({
   component: SatisfacaoPage,
@@ -34,6 +36,7 @@ function SatisfacaoPage() {
   const [ano, setAno] = useState("");
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
+  const [espaco, setEspaco] = useState("todos");
 
   const filtered = useMemo(() => {
     return pesquisas.filter((pesquisa) => {
@@ -42,9 +45,10 @@ function SatisfacaoPage() {
       if (ano && pesquisa.ano !== Number(ano)) return false;
       if (inicio && pesquisa.data_resposta < inicio) return false;
       if (fim && pesquisa.data_resposta > fim) return false;
+      if (espaco !== "todos" && pesquisa.espaco !== espaco) return false;
       return true;
     });
-  }, [pesquisas, dia, mes, ano, inicio, fim]);
+  }, [pesquisas, dia, mes, ano, inicio, fim, espaco]);
 
   const stats = useMemo(() => computeStats(filtered), [filtered]);
   const rows = pesquisasToRows(filtered);
@@ -68,12 +72,21 @@ function SatisfacaoPage() {
         </div>
       </div>
 
-      <div className="bg-card border rounded-xl p-4 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="bg-card border rounded-xl p-4 grid sm:grid-cols-2 lg:grid-cols-6 gap-3">
         <Field label="Dia"><Input type="date" value={dia} max={today} onChange={(e) => setDia(e.target.value)} /></Field>
         <Field label="Mês"><Input type="number" min={1} max={12} value={mes} onChange={(e) => setMes(e.target.value)} placeholder="1-12" /></Field>
         <Field label="Ano"><Input type="number" value={ano} onChange={(e) => setAno(e.target.value)} placeholder="2026" /></Field>
         <Field label="De"><Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></Field>
         <Field label="Até"><Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} /></Field>
+        <Field label="Espaço">
+          <Select value={espaco} onValueChange={setEspaco}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os espaços</SelectItem>
+              {ESPACOS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -157,6 +170,7 @@ function SatisfacaoPage() {
               <tr>
                 <th className="text-left px-4 py-3">Data</th>
                 <th className="text-left px-4 py-3">Visitante</th>
+                <th className="text-left px-4 py-3">Espaço</th>
                 <th className="text-left px-4 py-3">Avaliação</th>
                 <th className="text-left px-4 py-3">Eventos</th>
                 <th className="text-left px-4 py-3">Comentário</th>
@@ -164,8 +178,8 @@ function SatisfacaoPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading && <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>}
-              {!isLoading && filtered.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma resposta encontrada.</td></tr>}
+              {isLoading && <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando...</td></tr>}
+              {!isLoading && filtered.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhuma resposta encontrada.</td></tr>}
               {filtered.map((pesquisa) => (
                 <tr key={pesquisa.id} className="border-t">
                   <td className="px-4 py-3">{formatDate(pesquisa.data_resposta)}</td>
@@ -173,6 +187,7 @@ function SatisfacaoPage() {
                     <p className="font-medium">{pesquisa.visitante_nome || "Visitante"}</p>
                     <p className="text-xs text-muted-foreground">{pesquisa.visitante_telefone}</p>
                   </td>
+                  <td className="px-4 py-3">{getEspacoLabel(pesquisa.espaco)}</td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center gap-2">
                       <span className="text-2xl">{pesquisa.emoji}</span>

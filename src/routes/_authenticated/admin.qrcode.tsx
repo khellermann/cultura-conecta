@@ -1,114 +1,177 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { Download, Printer, Share2, Copy } from "lucide-react";
+import { BookOpen, Building2, Copy, Download, Landmark, Printer, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ESPACOS, type EspacoVisita } from "@/lib/visitantes";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/qrcode")({
   component: QRCodePage,
 });
 
+const ICONS = {
+  museu: Landmark,
+  biblioteca: BookOpen,
+  "casa-da-cultura": Building2,
+} satisfies Record<EspacoVisita, typeof Building2>;
+
 function QRCodePage() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [dataUrl, setDataUrl] = useState("");
-  const [url, setUrl] = useState("");
+  const [origin, setOrigin] = useState("");
 
   useEffect(() => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    setUrl(origin + "/");
+    setOrigin(typeof window !== "undefined" ? window.location.origin : "");
   }, []);
+
+  return (
+    <div className="max-w-7xl space-y-6">
+      <div>
+        <h1 className="font-display text-3xl text-primary">QR Codes por espaço</h1>
+        <p className="text-muted-foreground text-sm">
+          Imprima o código correspondente e disponibilize na entrada de cada espaço.
+        </p>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-3">
+        {ESPACOS.map((espaco) => (
+          <QRCodeCard
+            key={espaco.value}
+            espaco={espaco.value}
+            label={espaco.label}
+            url={origin ? `${origin}/?espaco=${espaco.value}` : ""}
+          />
+        ))}
+      </div>
+
+      <div className="rounded-lg border bg-muted/35 px-4 py-3 text-sm text-muted-foreground">
+        Cada link registra automaticamente o espaço visitado. O visitante não precisa escolher o local no formulário.
+      </div>
+    </div>
+  );
+}
+
+function QRCodeCard({
+  espaco,
+  label,
+  url,
+}: {
+  espaco: EspacoVisita;
+  label: string;
+  url: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [dataUrl, setDataUrl] = useState("");
+  const Icon = ICONS[espaco];
 
   useEffect(() => {
     if (!url || !canvasRef.current) return;
-    QRCode.toCanvas(canvasRef.current, url, {
-      width: 480,
+
+    const options = {
+      width: 420,
       margin: 2,
       color: { dark: "#5f1a1a", light: "#fdfaf2" },
-    });
-    QRCode.toDataURL(url, { width: 800, margin: 2, color: { dark: "#5f1a1a", light: "#fdfaf2" } })
-      .then(setDataUrl);
+    };
+
+    QRCode.toCanvas(canvasRef.current, url, options);
+    QRCode.toDataURL(url, { ...options, width: 800 }).then(setDataUrl);
   }, [url]);
 
   function handleDownload() {
     if (!dataUrl) return;
-    const a = document.createElement("a");
-    a.href = dataUrl;
-    a.download = "qrcode-casa-da-cultura.png";
-    a.click();
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = `qrcode-${espaco}.png`;
+    link.click();
   }
 
   function handlePrint() {
-    const w = window.open("", "_blank");
-    if (!w || !dataUrl) return;
-    w.document.write(`
-      <html><head><title>QR Code — Casa da Cultura</title>
+    const printWindow = window.open("", "_blank");
+    if (!printWindow || !dataUrl) return;
+
+    printWindow.document.write(`
+      <html><head><title>QR Code - ${label}</title>
       <style>
         body { font-family: Inter, sans-serif; text-align:center; padding:40px; color:#1b1010; }
-        h1 { color:#5f1a1a; font-family: Georgia, serif; margin:0 0 6px; }
-        .sub { color:#5f1a1a; opacity:.7; letter-spacing:.2em; text-transform:uppercase; font-size:11px; }
-        img { max-width: 360px; margin: 30px auto; display:block; }
-        p { color:#444; font-size:14px; max-width:380px; margin: 0 auto; }
+        h1 { color:#5f1a1a; font-family: Georgia, serif; margin:8px 0 6px; font-size:34px; }
+        .sub { color:#5f1a1a; opacity:.72; letter-spacing:.18em; text-transform:uppercase; font-size:11px; }
+        img { width:360px; max-width:90vw; margin:28px auto; display:block; }
+        p { color:#444; font-size:16px; max-width:420px; margin:0 auto; line-height:1.5; }
       </style></head><body>
         <div class="sub">Secretaria de Cultura</div>
-        <h1>Casa da Cultura</h1>
+        <h1>${label}</h1>
         <div class="sub">Siqueira Campos / PR</div>
-        <img src="${dataUrl}" />
-        <p>Aponte a câmera do celular para registrar sua visita.</p>
+        <img src="${dataUrl}" alt="QR Code ${label}" />
+        <p>Aponte a câmera do celular para registrar sua visita ao espaço.</p>
         <script>window.onload = () => window.print();</script>
       </body></html>
     `);
-    w.document.close();
+    printWindow.document.close();
   }
 
   async function handleShare() {
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Casa da Cultura", text: "Registre sua visita", url });
+        await navigator.share({
+          title: `${label} - Registro de visita`,
+          text: `Registre sua visita ao espaço ${label}`,
+          url,
+        });
       } else {
         await navigator.clipboard.writeText(url);
-        toast.success("Link copiado!");
+        toast.success(`Link do ${label} copiado!`);
       }
-    } catch {/* user cancelled */}
+    } catch {
+      // O compartilhamento pode ser cancelado pelo usuário.
+    }
   }
 
   async function copyUrl() {
     await navigator.clipboard.writeText(url);
-    toast.success("Link copiado");
+    toast.success(`Link do ${label} copiado`);
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-primary">QR Code</h1>
-        <p className="text-muted-foreground text-sm">Imprima e disponibilize na entrada da Casa da Cultura</p>
-      </div>
-
-      <div className="grid md:grid-cols-[auto,1fr] gap-6 items-start bg-card border rounded-xl p-6">
-        <div className="bg-cream rounded-xl p-4 border flex items-center justify-center">
-          <canvas ref={canvasRef} className="block max-w-full h-auto" />
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Link público</p>
-            <div className="flex gap-2">
-              <code className="flex-1 text-xs sm:text-sm bg-muted rounded-lg px-3 py-2 break-all">{url}</code>
-              <Button size="icon" variant="outline" onClick={copyUrl} aria-label="Copiar"><Copy className="w-4 h-4" /></Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <Button onClick={handleDownload}><Download className="w-4 h-4 mr-2" /> Baixar PNG</Button>
-            <Button variant="outline" onClick={handlePrint}><Printer className="w-4 h-4 mr-2" /> Imprimir</Button>
-            <Button variant="outline" onClick={handleShare}><Share2 className="w-4 h-4 mr-2" /> Compartilhar</Button>
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Visitantes que escanearem o QR Code serão direcionados ao formulário público de registro.
-          </p>
+    <section className="overflow-hidden rounded-lg border bg-card">
+      <div className="flex items-center gap-3 border-b px-5 py-4">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="h-5 w-5" />
+        </span>
+        <div>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Espaço</p>
+          <h2 className="font-display text-xl text-primary">{label}</h2>
         </div>
       </div>
-    </div>
+
+      <div className="space-y-4 p-5">
+        <div className="flex items-center justify-center rounded-lg border bg-cream p-3">
+          <canvas ref={canvasRef} className="block h-auto w-full max-w-[280px]" />
+        </div>
+
+        <div>
+          <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Link público</p>
+          <div className="flex gap-2">
+            <code className="min-w-0 flex-1 break-all rounded-md bg-muted px-3 py-2 text-xs">{url}</code>
+            <Button size="icon" variant="outline" onClick={copyUrl} aria-label={`Copiar link do ${label}`}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <Button size="sm" onClick={handleDownload} title="Baixar PNG">
+            <Download className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Baixar</span>
+          </Button>
+          <Button size="sm" variant="outline" onClick={handlePrint} title="Imprimir">
+            <Printer className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Imprimir</span>
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleShare} title="Compartilhar">
+            <Share2 className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Enviar</span>
+          </Button>
+        </div>
+      </div>
+    </section>
   );
 }

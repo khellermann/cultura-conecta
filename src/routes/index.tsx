@@ -8,11 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { createVisitante } from "@/lib/visitantes";
+import {
+  createVisitante,
+  getEspacoLabel,
+  isEspacoVisita,
+} from "@/lib/visitantes";
 import { toast } from "sonner";
 import museumVisitBg from "@/assets/hero-museu.jpg";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    espaco: isEspacoVisita(search.espaco) ? search.espaco : "casa-da-cultura",
+  }),
   head: () => ({
     meta: [
       { title: "Registro de Visita - Casa da Cultura de Siqueira Campos/PR" },
@@ -46,6 +53,7 @@ const schema = z.object({
 });
 
 function VisitantePublicForm() {
+  const { espaco } = Route.useSearch();
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -71,7 +79,7 @@ function VisitantePublicForm() {
     }
     setLoading(true);
 
-    const recentKey = `lastVisit:${telefone.replace(/\D/g, "")}`;
+    const recentKey = `lastVisit:${espaco}:${telefone.replace(/\D/g, "")}`;
     const last = typeof window !== "undefined" ? Number(localStorage.getItem(recentKey) || 0) : 0;
     if (Date.now() - last < 60_000) {
       setLoading(false);
@@ -81,6 +89,7 @@ function VisitantePublicForm() {
 
     try {
       const visitanteId = await createVisitante({
+        espaco,
         nome: parsed.data.nome,
         telefone: parsed.data.telefone,
         morador_siqueira_campos: parsed.data.morador === "sim",
@@ -88,7 +97,11 @@ function VisitantePublicForm() {
         estado: parsed.data.morador === "nao" ? parsed.data.estado : null,
       });
       if (typeof window !== "undefined") localStorage.setItem(recentKey, String(Date.now()));
-      navigate({ to: "/pesquisa/$visitanteId", params: { visitanteId } });
+      navigate({
+        to: "/pesquisa/$visitanteId",
+        params: { visitanteId },
+        search: { espaco },
+      });
       return;
     } catch {
       setLoading(false);
@@ -145,7 +158,7 @@ function VisitantePublicForm() {
         <div className="max-w-2xl mx-auto px-5 py-6 flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gold/90">Secretaria de Cultura</p>
-            <h1 className="font-display text-xl sm:text-2xl mt-1">Casa da Cultura</h1>
+            <h1 className="font-display text-xl sm:text-2xl mt-1">{getEspacoLabel(espaco)}</h1>
             <p className="text-xs text-primary-foreground/70">Siqueira Campos / PR</p>
           </div>
           <Link to="/auth" className="text-xs flex items-center gap-1.5 opacity-80 hover:opacity-100">
@@ -167,7 +180,7 @@ function VisitantePublicForm() {
             Seja muito bem-vindo(a).
           </h2>
           <p className="text-primary-foreground/78 mt-2">
-            Registre sua visita em poucos segundos.
+            Registre sua visita ao espaço <strong>{getEspacoLabel(espaco)}</strong> em poucos segundos.
           </p>
         </motion.div>
 

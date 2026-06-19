@@ -5,15 +5,16 @@ import { Download, FileSpreadsheet, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { fetchAllVisitantes, type Visitante } from "@/lib/visitantes";
+import { ESPACOS, fetchAllVisitantes, getEspacoLabel, type Visitante } from "@/lib/visitantes";
 import { exportPDF, exportXLSX, printRows, visitantesToRows } from "@/lib/exporters";
 
 export const Route = createFileRoute("/_authenticated/admin/relatorios")({
   component: RelatoriosPage,
 });
 
-type TipoRelatorio = "diario" | "mensal" | "anual" | "periodo" | "cidade" | "estado" | "locais" | "fora" | "recorrentes";
+type TipoRelatorio = "diario" | "mensal" | "anual" | "periodo" | "espaco" | "cidade" | "estado" | "locais" | "fora" | "recorrentes";
 
 function RelatoriosPage() {
   const { data: visitantes = [] } = useQuery({ queryKey: ["visitantes"], queryFn: fetchAllVisitantes });
@@ -26,9 +27,10 @@ function RelatoriosPage() {
   const [fim, setFim] = useState("");
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
+  const [espaco, setEspaco] = useState("casa-da-cultura");
 
-  const { titulo, data } = useMemo(() => filtrar(visitantes, tipo, { dia, mes, ano, inicio, fim, cidade, estado }),
-    [visitantes, tipo, dia, mes, ano, inicio, fim, cidade, estado]);
+  const { titulo, data } = useMemo(() => filtrar(visitantes, tipo, { dia, mes, ano, inicio, fim, cidade, estado, espaco }),
+    [visitantes, tipo, dia, mes, ano, inicio, fim, cidade, estado, espaco]);
   const rows = visitantesToRows(data);
 
   return (
@@ -44,6 +46,7 @@ function RelatoriosPage() {
           <TabsTrigger value="mensal">Mensal</TabsTrigger>
           <TabsTrigger value="anual">Anual</TabsTrigger>
           <TabsTrigger value="periodo">Período</TabsTrigger>
+          <TabsTrigger value="espaco">Espaço</TabsTrigger>
           <TabsTrigger value="cidade">Cidade</TabsTrigger>
           <TabsTrigger value="estado">Estado</TabsTrigger>
           <TabsTrigger value="locais">Locais</TabsTrigger>
@@ -65,6 +68,16 @@ function RelatoriosPage() {
           <TabsContent value="periodo" className="m-0 grid grid-cols-2 gap-3">
             <Field label="De"><Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} /></Field>
             <Field label="Até"><Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} /></Field>
+          </TabsContent>
+          <TabsContent value="espaco" className="m-0">
+            <Field label="Espaço">
+              <Select value={espaco} onValueChange={setEspaco}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ESPACOS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
           </TabsContent>
           <TabsContent value="cidade" className="m-0">
             <Field label="Cidade"><Input value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Nome da cidade" /></Field>
@@ -103,6 +116,7 @@ function RelatoriosPage() {
               <tr>
                 <th className="text-left px-3 py-2">Nome</th>
                 <th className="text-left px-3 py-2">Telefone</th>
+                <th className="text-left px-3 py-2">Espaço</th>
                 <th className="text-left px-3 py-2">Origem</th>
                 <th className="text-left px-3 py-2">Data</th>
                 <th className="text-left px-3 py-2">Hora</th>
@@ -110,12 +124,13 @@ function RelatoriosPage() {
             </thead>
             <tbody>
               {data.length === 0 && (
-                <tr><td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">Nenhum registro.</td></tr>
+                <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">Nenhum registro.</td></tr>
               )}
               {data.map((v) => (
                 <tr key={v.id} className="border-t">
                   <td className="px-3 py-2 font-medium">{v.nome}</td>
                   <td className="px-3 py-2">{v.telefone}</td>
+                  <td className="px-3 py-2">{getEspacoLabel(v.espaco)}</td>
                   <td className="px-3 py-2">{v.morador_siqueira_campos ? "Siqueira Campos" : `${v.cidade}/${v.estado}`}</td>
                   <td className="px-3 py-2">{formatDate(v.data_visita)}</td>
                   <td className="px-3 py-2">{v.hora_visita.slice(0, 5)}</td>
@@ -139,7 +154,7 @@ function formatDate(d: string) {
 }
 
 function filtrar(v: Visitante[], tipo: TipoRelatorio, p: {
-  dia: string; mes: string; ano: string; inicio: string; fim: string; cidade: string; estado: string;
+  dia: string; mes: string; ano: string; inicio: string; fim: string; cidade: string; estado: string; espaco: string;
 }): { titulo: string; data: Visitante[] } {
   switch (tipo) {
     case "diario":
@@ -154,6 +169,9 @@ function filtrar(v: Visitante[], tipo: TipoRelatorio, p: {
     case "periodo":
       return { titulo: `Relatório por período — ${p.inicio || "?"} a ${p.fim || "?"}`,
         data: v.filter((x) => (!p.inicio || x.data_visita >= p.inicio) && (!p.fim || x.data_visita <= p.fim)) };
+    case "espaco":
+      return { titulo: `Relatório por espaço — ${getEspacoLabel(p.espaco)}`,
+        data: v.filter((x) => x.espaco === p.espaco) };
     case "cidade":
       return { titulo: `Relatório por cidade — ${p.cidade}`,
         data: v.filter((x) => !x.morador_siqueira_campos && (x.cidade ?? "").toLowerCase().includes(p.cidade.toLowerCase())) };

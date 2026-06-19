@@ -1,13 +1,14 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
-import type { Visitante } from "./visitantes";
+import { getEspacoLabel, type Visitante } from "./visitantes";
 import { AVALIACOES, type PesquisaSatisfacao } from "./pesquisas";
 
 export type ExportRow = Record<string, string | number>;
 
 export function visitantesToRows(visitantes: Visitante[]): ExportRow[] {
   return visitantes.map((v) => ({
+    Espaço: getEspacoLabel(v.espaco),
     Nome: v.nome,
     Telefone: v.telefone,
     "Mora em Siqueira Campos": v.morador_siqueira_campos ? "Sim" : "Não",
@@ -21,6 +22,7 @@ export function visitantesToRows(visitantes: Visitante[]): ExportRow[] {
 export function pesquisasToRows(pesquisas: PesquisaSatisfacao[]): ExportRow[] {
   return pesquisas.map((p) => ({
     Data: formatDate(p.data_resposta),
+    Espaço: getEspacoLabel(p.espaco),
     Visitante: p.visitante_nome,
     Telefone: p.visitante_telefone,
     Avaliação: AVALIACOES.find((item) => item.value === p.avaliacao)?.label ?? p.avaliacao,

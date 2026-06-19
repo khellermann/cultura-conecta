@@ -10,13 +10,18 @@ import { AVALIACOES, createPesquisaSatisfacao, fetchVisitanteById, type Avaliaca
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import museumVisitBg from "@/assets/hero-museu.jpg";
+import { getEspacoLabel, isEspacoVisita } from "@/lib/visitantes";
 
 export const Route = createFileRoute("/pesquisa/$visitanteId")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    espaco: isEspacoVisita(search.espaco) ? search.espaco : "casa-da-cultura",
+  }),
   component: PesquisaPage,
 });
 
 function PesquisaPage() {
   const { visitanteId } = Route.useParams();
+  const { espaco } = Route.useSearch();
   const { data: visitante } = useQuery({
     queryKey: ["visitante", visitanteId],
     queryFn: () => fetchVisitanteById(visitanteId),
@@ -45,6 +50,7 @@ function PesquisaPage() {
     try {
       await createPesquisaSatisfacao({
         visitante_id: visitanteId,
+        espaco,
         avaliacao: selectedOption.value,
         emoji: selectedOption.emoji,
         comentario_gostou: comentarioGostou.trim(),
@@ -80,11 +86,11 @@ function PesquisaPage() {
               </div>
               <h1 className="font-display text-3xl text-primary">Obrigado!</h1>
               <p className="mt-4 text-muted-foreground leading-relaxed">
-                Obrigado pela sua visita e pela sua opinião! A Casa da Cultura de
+                Obrigado pela sua visita e pela sua opinião! O espaço {getEspacoLabel(espaco)} de
                 Siqueira Campos/PR espera receber você novamente em breve.
               </p>
               <Button asChild className="mt-8 w-full h-12">
-                <Link to="/">Finalizar</Link>
+                <Link to="/" search={{ espaco }}>Finalizar</Link>
               </Button>
             </motion.section>
           ) : (

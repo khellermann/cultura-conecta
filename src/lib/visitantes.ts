@@ -13,6 +13,7 @@ import {
 
 export type Visitante = {
   id: string;
+  espaco: EspacoVisita;
   nome: string;
   telefone: string;
   morador_siqueira_campos: boolean;
@@ -27,12 +28,29 @@ export type Visitante = {
 };
 
 export type VisitanteInput = {
+  espaco: EspacoVisita;
   nome: string;
   telefone: string;
   morador_siqueira_campos: boolean;
   cidade: string | null;
   estado: string | null;
 };
+
+export const ESPACOS = [
+  { value: "museu", label: "Museu" },
+  { value: "biblioteca", label: "Biblioteca" },
+  { value: "casa-da-cultura", label: "Casa da Cultura" },
+] as const;
+
+export type EspacoVisita = (typeof ESPACOS)[number]["value"];
+
+export function isEspacoVisita(value: unknown): value is EspacoVisita {
+  return ESPACOS.some((espaco) => espaco.value === value);
+}
+
+export function getEspacoLabel(value: EspacoVisita | string | null | undefined) {
+  return ESPACOS.find((espaco) => espaco.value === value)?.label ?? "Casa da Cultura";
+}
 
 export const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 export const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -46,6 +64,7 @@ export async function fetchAllVisitantes(): Promise<Visitante[]> {
     const data = document.data();
     return {
       id: document.id,
+      espaco: isEspacoVisita(data.espaco) ? data.espaco : "casa-da-cultura",
       nome: data.nome ?? "",
       telefone: data.telefone ?? "",
       morador_siqueira_campos: Boolean(data.morador_siqueira_campos),

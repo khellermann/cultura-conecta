@@ -9,7 +9,11 @@ import {
   query,
   serverTimestamp,
 } from "@/integrations/firebase/client";
-import type { Visitante } from "./visitantes";
+import {
+  isEspacoVisita,
+  type EspacoVisita,
+  type Visitante,
+} from "./visitantes";
 
 export const AVALIACOES = [
   { value: 5, emoji: "😍", label: "Excelente" },
@@ -26,6 +30,7 @@ export type PesquisaSatisfacao = {
   visitante_id: string;
   visitante_nome: string;
   visitante_telefone: string;
+  espaco: EspacoVisita;
   avaliacao: AvaliacaoValor;
   emoji: string;
   comentario_gostou: string;
@@ -39,6 +44,7 @@ export type PesquisaSatisfacao = {
 
 export type PesquisaInput = {
   visitante_id: string;
+  espaco: EspacoVisita;
   avaliacao: AvaliacaoValor;
   emoji: string;
   comentario_gostou: string;
@@ -53,6 +59,7 @@ export async function fetchVisitanteById(id: string): Promise<Visitante | null> 
 
   return {
     id: snapshot.id,
+    espaco: isEspacoVisita(data.espaco) ? data.espaco : "casa-da-cultura",
     nome: data.nome ?? "",
     telefone: data.telefone ?? "",
     morador_siqueira_campos: Boolean(data.morador_siqueira_campos),
@@ -81,6 +88,7 @@ export async function createPesquisaSatisfacao(input: PesquisaInput) {
     ...input,
     visitante_nome: visitante?.nome ?? "",
     visitante_telefone: visitante?.telefone ?? "",
+    espaco: visitante?.espaco ?? input.espaco,
     data_resposta: toDateInputValue(now),
     mes: Number(new Intl.DateTimeFormat("pt-BR", { month: "numeric", timeZone: "America/Sao_Paulo" }).format(now)),
     ano: Number(new Intl.DateTimeFormat("pt-BR", { year: "numeric", timeZone: "America/Sao_Paulo" }).format(now)),
@@ -103,6 +111,7 @@ export async function fetchAllPesquisas(): Promise<PesquisaSatisfacao[]> {
       visitante_id: data.visitante_id ?? "",
       visitante_nome: data.visitante_nome ?? "",
       visitante_telefone: data.visitante_telefone ?? "",
+      espaco: isEspacoVisita(data.espaco) ? data.espaco : "casa-da-cultura",
       avaliacao,
       emoji: data.emoji ?? option?.emoji ?? "",
       comentario_gostou: data.comentario_gostou ?? "",
