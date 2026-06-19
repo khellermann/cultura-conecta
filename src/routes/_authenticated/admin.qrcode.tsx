@@ -92,35 +92,41 @@ function QRCodeCard({
     printWindow.document.write(`
       <html><head><title>QR Code - ${label}</title>
       <style>
-        @page { size: A4 portrait; margin: 14mm; }
+        @page { size: A4 portrait; margin: 10mm; }
         * { box-sizing: border-box; }
+        html, body {
+          width: 100%;
+          height: 100%;
+        }
         body {
           font-family: Arial, sans-serif;
           text-align: center;
           color: #1b1010;
           margin: 0;
           background: #fff;
+          overflow: hidden;
         }
         .poster {
-          min-height: 267mm;
-          border: 2px solid #5f1a1a;
-          padding: 18mm 14mm 14mm;
+          width: 100%;
+          height: 277mm;
+          padding: 7mm 10mm 5mm;
           display: flex;
           flex-direction: column;
           align-items: center;
+          overflow: hidden;
         }
         .logo {
           display: block;
-          width: 150mm;
-          max-width: 88%;
+          width: 126mm;
+          max-width: 82%;
           height: auto;
-          margin: 0 auto 12mm;
+          margin: 0 auto 5mm;
         }
         .divider {
-          width: 48mm;
+          width: 42mm;
           height: 2px;
           background: #bf9245;
-          margin-bottom: 9mm;
+          margin-bottom: 5mm;
         }
         .eyebrow {
           color: #5f1a1a;
@@ -132,8 +138,8 @@ function QRCodeCard({
         h1 {
           color: #5f1a1a;
           font-family: Georgia, serif;
-          margin: 3mm 0 2mm;
-          font-size: 34px;
+          margin: 2mm 0 1.5mm;
+          font-size: 32px;
         }
         .location {
           color: #4b4545;
@@ -142,15 +148,13 @@ function QRCodeCard({
           font-size: 11px;
         }
         .qr-frame {
-          margin: 11mm auto 8mm;
-          padding: 7mm;
-          border: 1px solid #d7c8ad;
-          background: #fdfaf2;
+          margin: 7mm auto 5mm;
+          padding: 0;
         }
         .qr {
           display: block;
-          width: 92mm;
-          height: 92mm;
+          width: 86mm;
+          height: 86mm;
         }
         .instruction {
           color: #302a2a;
@@ -158,7 +162,7 @@ function QRCodeCard({
           font-size: 20px;
           font-weight: 700;
           max-width: 130mm;
-          margin: 0 auto 3mm;
+          margin: 0 auto 2mm;
         }
         .support {
           color: #666;
@@ -173,7 +177,10 @@ function QRCodeCard({
           letter-spacing: .12em;
           text-transform: uppercase;
           margin-top: auto;
-          padding-top: 10mm;
+          padding-top: 5mm;
+        }
+        @media print {
+          body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
       </style></head><body>
         <main class="poster">
