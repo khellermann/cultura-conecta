@@ -31,6 +31,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
@@ -84,12 +85,15 @@ function AuthPage() {
 
   async function handleReset() {
     if (!email) return toast.error("Informe o e-mail no campo acima.");
+    setResetLoading(true);
     try {
       await sendPasswordReset(email);
     } catch (error) {
+      setResetLoading(false);
       return toast.error((error as Error).message);
     }
-    toast.success("Enviamos as instruções para seu e-mail.");
+    setResetLoading(false);
+    toast.success("Enviamos um link de redefinição para seu e-mail.");
   }
 
   return (
@@ -129,8 +133,13 @@ function AuthPage() {
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Entrando..." : "Entrar"}
                   </Button>
-                  <button type="button" onClick={handleReset} className="block w-full text-xs text-muted-foreground hover:text-primary">
-                    Esqueci minha senha
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    disabled={resetLoading}
+                    className="block w-full text-xs text-muted-foreground hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {resetLoading ? "Enviando e-mail..." : "Esqueci minha senha"}
                   </button>
                 </form>
               </TabsContent>

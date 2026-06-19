@@ -1,11 +1,12 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import {
+  confirmPasswordReset,
   createUserWithEmailAndPassword,
   getAuth,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
-  updatePassword,
+  verifyPasswordResetCode,
   type Auth,
   type User,
 } from "firebase/auth";
@@ -16,7 +17,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  getDoc,
   getFirestore,
   orderBy,
   query,
@@ -201,15 +201,17 @@ export async function removeUserProfile(id: string) {
 }
 
 export async function sendPasswordReset(email: string) {
-  await sendPasswordResetEmail(getFirebaseAuth(), email, {
-    url: `${window.location.origin}/auth`,
-  });
+  const auth = getFirebaseAuth();
+  auth.languageCode = "pt-BR";
+  await sendPasswordResetEmail(auth, email);
 }
 
-export async function updateCurrentUserPassword(password: string) {
-  const user = getFirebaseAuth().currentUser;
-  if (!user) throw new Error("Faça login novamente para alterar a senha.");
-  await updatePassword(user, password);
+export async function validatePasswordResetCode(code: string) {
+  return verifyPasswordResetCode(getFirebaseAuth(), code);
+}
+
+export async function completePasswordReset(code: string, password: string) {
+  await confirmPasswordReset(getFirebaseAuth(), code, password);
 }
 
 export async function logout() {
