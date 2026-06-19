@@ -18,7 +18,7 @@ import museumVisitBg from "@/assets/hero-museu.jpg";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => ({
-    espaco: isEspacoVisita(search.espaco) ? search.espaco : "casa-da-cultura",
+    espaco: isEspacoVisita(search.espaco) ? search.espaco : undefined,
   }),
   head: () => ({
     meta: [
@@ -53,7 +53,8 @@ const schema = z.object({
 });
 
 function VisitantePublicForm() {
-  const { espaco } = Route.useSearch();
+  const { espaco: espacoParam } = Route.useSearch();
+  const espaco = espacoParam ?? "casa-da-cultura";
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
