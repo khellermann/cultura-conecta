@@ -23,6 +23,7 @@ import {
   type Visitante,
 } from "@/lib/visitantes";
 import { exportPDF, exportXLSX, printRows, visitantesToRows } from "@/lib/exporters";
+import { getCurrentUserProfile } from "@/integrations/firebase/client";
 
 export const Route = createFileRoute("/_authenticated/admin/visitantes")({
   component: VisitantesPage,
@@ -33,6 +34,10 @@ function VisitantesPage() {
   const { data: visitantes = [], isLoading } = useQuery({
     queryKey: ["visitantes"],
     queryFn: fetchAllVisitantes,
+  });
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: getCurrentUserProfile,
   });
 
   const [q, setQ] = useState("");
@@ -64,7 +69,12 @@ function VisitantesPage() {
       toast.success("Visitante excluído");
       queryClient.invalidateQueries({ queryKey: ["visitantes"] });
     } catch (error) {
-      toast.error("Falha ao excluir: " + (error as Error).message);
+      const message = (error as { code?: string; message?: string }).message ?? "";
+      if (message.includes("permission") || message.includes("insufficient")) {
+        toast.error("Exclusão bloqueada pelas regras do Firestore. Publique a permissão de exclusão para o administrador principal.");
+      } else {
+        toast.error("Falha ao excluir: " + message);
+      }
     }
     setDeleting(null);
   }
@@ -149,9 +159,11 @@ function VisitantesPage() {
                       <Button size="icon" variant="ghost" onClick={() => setEditing(v)} aria-label="Editar">
                         <Pencil className="w-4 h-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setDeleting(v)} aria-label="Excluir">
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
+                      {profile?.isAdmin && (
+                        <Button size="icon" variant="ghost" onClick={() => setDeleting(v)} aria-label="Excluir">
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
